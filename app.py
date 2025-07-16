@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import pickle
@@ -6,10 +5,10 @@ import requests
 import os
 import gdown
 
-# === PAGE CONFIG ===
+# === CONFIG ===
 st.set_page_config(page_title="🎥 Movie Recommender", layout="wide")
 
-# === GLOBAL STYLE ===
+# === GLOBAL STYLES ===
 st.markdown("""
     <style>
     body {
@@ -82,27 +81,28 @@ def recommend(movie):
 
     return recommended_names, recommended_posters
 
-# === LOAD MOVIES ===
-movies_dict = pickle.load(open('movie_dict.pkl', 'rb'))
-movies = pd.DataFrame(movies_dict)
+# === DOWNLOAD similarity.pkl IF MISSING ===
+SIMILARITY_FILE = 'similarity.pkl'
+SIMILARITY_FILE_ID = '1-OtLH1Og5rUX0T9utM3Fvyrno9EE1jzP'
 
-# === DOWNLOAD similarity.pkl from Google Drive ===
-file_id = "1-OtLH1Og5rUX0T9utM3Fvyrno9EE1jzP"
-url = f"https://drive.google.com/uc?id={file_id}"
-output = "similarity.pkl"
+if not os.path.exists(SIMILARITY_FILE):
+    with st.spinner("📥 Downloading similarity.pkl..."):
+        gdown.download(f'https://drive.google.com/uc?id={SIMILARITY_FILE_ID}', SIMILARITY_FILE, quiet=False, fuzzy=True)
 
-if not os.path.exists(output):
-    with st.spinner("📥 Downloading similarity model..."):
-        gdown.download(url, output, quiet=False)
-
-# === LOAD SIMILARITY ===
-with open(output, 'rb') as f:
-    similarity = pickle.load(f)
+# === LOAD DATA ===
+try:
+    movies_dict = pickle.load(open('movie_dict.pkl', 'rb'))
+    movies = pd.DataFrame(movies_dict)
+    with open(SIMILARITY_FILE, 'rb') as f:
+        similarity = pickle.load(f)
+except Exception as e:
+    st.error(f"❌ Failed to load data: {e}")
+    st.stop()
 
 # === TITLE ===
 st.markdown("<div class='title-center'>🎬 Movie Recommender System</div><hr>", unsafe_allow_html=True)
 
-# === SELECT BOX ===
+# === SELECT MOVIE ===
 selected_movie_name = st.selectbox("🎞️ Choose a movie you like:", movies['title'].values)
 
 # === RECOMMEND BUTTON ===
