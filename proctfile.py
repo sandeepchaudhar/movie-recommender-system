@@ -1,1 +1,0 @@
-web:sh setup.sh && strwamlit run app.py
