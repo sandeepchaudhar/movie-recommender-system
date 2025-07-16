@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import pickle
 import requests
+import urllib.request
+import os
 
 # === PAGE CONFIG ===
 st.set_page_config(page_title="🎥 Movie Recommender", layout="wide")
@@ -55,13 +57,14 @@ st.markdown("""
 
 # === POSTER FETCH ===
 def fetch_poster(movie_id):
-    url = f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=5e72e0f509c71c6a59e2dc08c3f996c6&language=en-US'
-    response = requests.get(url)
-    if response.status_code != 200:
-        return "https://via.placeholder.com/300x450.png?text=Poster+Not+Found"
-    data = response.json()
-    path = data.get('poster_path')
-    return f"https://image.tmdb.org/t/p/w500{path}" if path else "https://via.placeholder.com/300x450.png?text=No+Image"
+    try:
+        url = f'https://api.themoviedb.org/3/movie/{movie_id}?api_key=5e72e0f509c71c6a59e2dc08c3f996c6&language=en-US'
+        response = requests.get(url)
+        data = response.json()
+        path = data.get('poster_path')
+        return f"https://image.tmdb.org/t/p/w500{path}" if path else "https://via.placeholder.com/300x450.png?text=No+Image"
+    except:
+        return "https://via.placeholder.com/300x450.png?text=Error"
 
 # === RECOMMENDER LOGIC ===
 def recommend(movie):
@@ -80,6 +83,12 @@ def recommend(movie):
     return recommended_names, recommended_posters
 
 # === LOAD DATA ===
+# Download similarity.pkl if not present
+if not os.path.exists("similarity.pkl"):
+    url = "https://drive.google.com/uc?export=download&id=1-OtLH1Og5rUX0T9utM3Fvyrno9EE1jzP"
+    urllib.request.urlretrieve(url, "similarity.pkl")
+
+# Load files
 movies_dict = pickle.load(open('movie_dict.pkl', 'rb'))
 movies = pd.DataFrame(movies_dict)
 similarity = pickle.load(open('similarity.pkl', 'rb'))
